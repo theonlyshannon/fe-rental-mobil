@@ -1,69 +1,98 @@
-const API_URL = "http://127.0.0.1:8000/api"; // Sesuaikan dengan backend
+const API_URL = "http://127.0.0.1:8000"; // Sesuaikan dengan backend
+
+interface User {
+  id: number;
+  name: string;
+  email: string;
+}
 
 export const authService = {
-  async register(name: string, email: string, password: string, password_confirmation: string): Promise<void> {
-    const response = await fetch(`${API_URL}/register`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ name, email, password, password_confirmation }),
+  // Ambil CSRF token sebelum login/register
+  async getCsrfToken(): Promise<void> {
+    await fetch(`${API_URL}/sanctum/csrf-cookie`, {
+      method: "GET",
+      credentials: "include", // Penting untuk menyertakan cookie
     });
+  },
 
-    if (!response.ok) {
-      throw new Error("Registration failed");
+  async register(name: string, email: string, password: string, password_confirmation: string): Promise<void> {
+    try {
+      await this.getCsrfToken(); // Ambil CSRF token sebelum register
+
+      const response = await fetch(`${API_URL}/api/register`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+        },
+        credentials: "include", // Tambahkan ini agar cookie bisa dikirim
+        body: JSON.stringify({ name, email, password, password_confirmation }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Registration failed");
+      }
+    } catch (error) {
+      throw new Error(error instanceof Error ? error.message : "An unexpected error occurred");
     }
   },
 
   async login(email: string, password: string): Promise<void> {
-    const response = await fetch(`${API_URL}/login`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ email, password }),
-    });
+    try {
+      await this.getCsrfToken(); // Ambil CSRF token sebelum login
 
-    if (!response.ok) {
-      throw new Error("Login failed");
+      const response = await fetch(`${API_URL}/api/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+        },
+        credentials: "include", // Tambahkan agar cookie bisa dikirim
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Login failed");
+      }
+    } catch (error) {
+      throw new Error(error instanceof Error ? error.message : "An unexpected error occurred");
     }
-
-    const data = await response.json();
-    localStorage.setItem("token", data.token);
   },
 
   async logout(): Promise<void> {
-    const token = localStorage.getItem("token");
-
-    if (!token) return;
-
-    await fetch(`${API_URL}/logout`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    localStorage.removeItem("token");
+    try {
+      await fetch(`${API_URL}/api/logout`, {
+        method: "POST",
+        headers: {
+          "Accept": "application/json",
+        },
+        credentials: "include", // Pastikan ini ada agar cookie dihapus
+      });
+    } catch (error) {
+      console.error("Logout failed", error);
+    }
   },
 
   async getUser(): Promise<User | null> {
-    const token = localStorage.getItem("token");
+    try {
+      const response = await fetch(`${API_URL}/api/user`, {
+        method: "GET",
+        headers: {
+          "Accept": "application/json",
+        },
+        credentials: "include", // Pastikan ini ada agar cookie dikirim
+      });
 
-    if (!token) return null;
+      if (!response.ok) {
+        return null;
+      }
 
-    const response = await fetch(`${API_URL}/user`, {
-      method: "GET",
-      headers: {
-        "Authorization": `Bearer ${token}`,
-      },
-    });
-
-    if (!response.ok) {
+      return response.json();
+    } catch (error) {
+      console.error("Failed to fetch user data", error);
       return null;
     }
-
-    return response.json();
   },
 };

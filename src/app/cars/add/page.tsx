@@ -1,38 +1,48 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { createUser } from "@/service/userService";
+import { createCar } from "@/service/carService";
 import { AppSidebar } from "@/components/app-sidebar";
 import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
+    Breadcrumb,
+    BreadcrumbItem,
+    BreadcrumbLink,
+    BreadcrumbList,
+    BreadcrumbPage,
+    BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Separator } from "@/components/ui/separator";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 
-export default function AddUserPage() {
+export default function AddCarPage() {
     const router = useRouter();
-    const nameRef = useRef<HTMLInputElement>(null);
-    const emailRef = useRef<HTMLInputElement>(null);
-    const passwordRef = useRef<HTMLInputElement>(null); // Tambahkan referensi untuk password
+    const [name, setName] = useState("");
+    const [brandName, setBrandName] = useState("");
+    const [pricePerDay, setPricePerDay] = useState("");
+    const [stock, setStock] = useState("");
+    const [image, setImage] = useState<File | null>(null);
 
     const handleSubmit = async (event: React.FormEvent) => {
         event.preventDefault();
-        if (!nameRef.current || !emailRef.current || !passwordRef.current) return; // Periksa password
-
-        await createUser({
-            name: nameRef.current.value,
-            email: emailRef.current.value, // Perbaiki email yang diambil
-            password: passwordRef.current.value, // Tambahkan password
-        });
-
-        router.push("/users"); // Redirect ke daftar users setelah submit
+        try {
+            await createCar({
+                name,
+                brand_name: brandName,
+                price_per_day: Number(pricePerDay),
+                stock
+            }, image);
+            router.push("/cars"); // Redirect ke daftar mobil
+        } catch (error) {
+            console.error("Error creating car:", error);
+        }
     };
+
+    // const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    //     if (event.target.files && event.target.files.length > 0) {
+    //         setImage(event.target.files[0]);
+    //     }
+    // };
 
     return (
         <SidebarProvider>
@@ -44,32 +54,65 @@ export default function AddUserPage() {
                     <Breadcrumb>
                         <BreadcrumbList>
                             <BreadcrumbItem>
-                                <BreadcrumbLink href="/users">Users</BreadcrumbLink>
+                                <BreadcrumbLink href="/cars">Cars</BreadcrumbLink>
                             </BreadcrumbItem>
                             <BreadcrumbSeparator />
                             <BreadcrumbItem>
-                                <BreadcrumbPage>Add User</BreadcrumbPage>
+                                <BreadcrumbPage>Add Car</BreadcrumbPage>
                             </BreadcrumbItem>
                         </BreadcrumbList>
                     </Breadcrumb>
                 </header>
-                <div className="p-4">
-                    <div className="bg-white p-6 rounded-lg shadow">
-                        <h2 className="text-xl font-semibold mb-4">Add User</h2>
-                        <form onSubmit={handleSubmit} className="space-y-2">
-                            <input ref={nameRef} type="text" placeholder="Name" className="border p-2 w-full" required />
-                            <input ref={emailRef} type="email" placeholder="Email" className="border p-2 w-full" required />
-                            <input ref={passwordRef} type="password" placeholder="Password" className="border p-2 w-full" required /> {/* Tambahkan input untuk password */}
-                            <div className="flex space-x-2">
-                                <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded">
-                                    Add User
-                                </button>
-                                <button onClick={() => router.push("/users")} className="bg-gray-500 text-white px-4 py-2 rounded">
-                                    Back
-                                </button>
-                            </div>
-                        </form>
-                    </div>
+                <div className="p-6 max-w-lg mx-auto bg-white shadow rounded">
+                    <h2 className="text-xl font-bold mb-4">Add New Car</h2>
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        <input
+                            type="text"
+                            placeholder="Car Name"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            className="border p-2 w-full"
+                            required
+                        />
+                        <input
+                            type="text"
+                            placeholder="Brand Name"
+                            value={brandName}
+                            onChange={(e) => setBrandName(e.target.value)}
+                            className="border p-2 w-full"
+                            required
+                        />
+                        <input
+                            type="number"
+                            placeholder="Price per Day"
+                            value={pricePerDay}
+                            onChange={(e) => setPricePerDay(e.target.value)}
+                            className="border p-2 w-full"
+                            required
+                        />
+                        <input
+                            type="text"
+                            placeholder="Stock"
+                            value={stock}
+                            onChange={(e) => setStock(e.target.value)}
+                            className="border p-2 w-full"
+                            required
+                        />
+                        <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => setImage(e.target.files?.[0] || null)}
+                            className="border p-2 w-full"
+                        />
+                        <div className="flex space-x-2">
+                            <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded">
+                                Add Car
+                            </button>
+                            <button onClick={() => router.push("/cars")} className="bg-gray-500 text-white px-4 py-2 rounded">
+                                Back
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </SidebarInset>
         </SidebarProvider>

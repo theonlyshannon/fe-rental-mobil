@@ -4,7 +4,7 @@ import React from 'react';
 
 const HeroSection: React.FC = () => {
     return (
-        <section className="hero bg-cover bg-center h-96" style={{ backgroundImage: 'url(/path/to/your/image.jpg)' }}>
+        <section className="hero bg-cover bg-center h-96" style={{ backgroundImage: 'url(/src/image/car.jpg)' }}>
             <div className="flex items-center justify-center h-full bg-black bg-opacity-50">
                 <div className="text-center text-white">
                     <h1 className="text-4xl font-bold mb-4">Sewa Mobil Impian Anda</h1>

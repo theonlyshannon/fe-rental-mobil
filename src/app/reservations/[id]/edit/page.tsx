@@ -1,13 +1,13 @@
 "use client";
 
-import { useRef, useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { createReservation } from "@/service/reservationService";
+import { useEffect, useState, useRef } from "react";
+import { useRouter, useParams } from "next/navigation";
+import { getReservationById, updateReservation } from "@/service/reservationService";
 import { getAllUsers } from "@/service/userService";
 import { getAllCars } from "@/service/carService";
 import { User } from "@/types/user";
 import { Car } from "@/types/car";
-import { PaymentStatus, ReservationStatus } from "@/types/reservation";
+import { PaymentStatus, ReservationStatus, Reservation } from "@/types/reservation";
 import { AppSidebar } from "@/components/app-sidebar";
 import {
   Breadcrumb,
@@ -20,13 +20,13 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 
-export default function AddReservationPage() {
+export default function EditReservationPage() {
     const router = useRouter();
+    const { id } = useParams();
+    const [reservation, setReservation] = useState<Reservation | null>(null);
     const [users, setUsers] = useState<User[]>([]);
     const [cars, setCars] = useState<Car[]>([]);
-    const [paymentStatuses, setPaymentStatuses] = useState<PaymentStatus[]>([]);
-    const [statuses, setStatuses] = useState<ReservationStatus[]>([]);
-    const [proofOfPayment, setProofOfPayment] = useState<File | null>(null); // State untuk file
+    const [proofOfPayment, setProofOfPayment] = useState<File | null>(null); // File baru jika diupload
 
     const userRef = useRef<HTMLSelectElement>(null);
     const carRef = useRef<HTMLSelectElement>(null);
@@ -34,29 +34,33 @@ export default function AddReservationPage() {
     const endDateRef = useRef<HTMLInputElement>(null);
     const paymentStatusRef = useRef<HTMLSelectElement>(null);
     const statusRef = useRef<HTMLSelectElement>(null);
-    const proofOfPaymentRef = useRef<HTMLInputElement>(null); // Ref untuk file input
+    const proofOfPaymentRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         fetchData();
     }, []);
 
     const fetchData = async () => {
+        if (!id) return;
+        const resData = await getReservationById(Number(id));
+        if (!resData) return;
+
+        setReservation(resData);
+
         const [usersData, carsData] = await Promise.all([getAllUsers(), getAllCars()]);
         setUsers(usersData);
         setCars(carsData);
-        setPaymentStatuses(Object.values(PaymentStatus));
-        setStatuses(Object.values(ReservationStatus));
     };
 
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         if (event.target.files) {
-            setProofOfPayment(event.target.files[0]); // Simpan file ke state
+            setProofOfPayment(event.target.files[0]); // Simpan file baru ke state
         }
     };
 
     const handleSubmit = async (event: React.FormEvent) => {
         event.preventDefault();
-        if (!userRef.current || !carRef.current || !startDateRef.current || !endDateRef.current || !paymentStatusRef.current || !statusRef.current) return;
+        if (!reservation || !userRef.current || !carRef.current || !startDateRef.current || !endDateRef.current || !paymentStatusRef.current || !statusRef.current) return;
 
         const formData = new FormData();
         formData.append("user_id", userRef.current.value);
@@ -65,14 +69,18 @@ export default function AddReservationPage() {
         formData.append("end_date", endDateRef.current.value);
         formData.append("payment_status", paymentStatusRef.current.value);
         formData.append("status", statusRef.current.value);
+
         if (proofOfPayment) {
             formData.append("proof_of_payment", proofOfPayment);
         }
 
-        await createReservation(formData);
-
+        await updateReservation(reservation.id, formData);
         router.push("/reservations");
     };
+
+    if (!reservation) {
+        return <p className="text-center">Loading...</p>;
+    }
 
     return (
         <SidebarProvider>
@@ -88,36 +96,36 @@ export default function AddReservationPage() {
                             </BreadcrumbItem>
                             <BreadcrumbSeparator />
                             <BreadcrumbItem>
-                                <BreadcrumbPage>Add Reservation</BreadcrumbPage>
+                                <BreadcrumbPage>Edit Reservation</BreadcrumbPage>
                             </BreadcrumbItem>
                         </BreadcrumbList>
                     </Breadcrumb>
                 </header>
                 <div className="p-4">
                     <div className="bg-white p-6 rounded-lg shadow">
-                        <h2 className="text-xl font-semibold mb-4">Add Reservation</h2>
+                        <h2 className="text-xl font-semibold mb-4">Edit Reservation</h2>
                         <form onSubmit={handleSubmit} className="space-y-2" encType="multipart/form-data">
-                            <select ref={userRef} className="border p-2 w-full" required>
+                            <select ref={userRef} className="border p-2 w-full" defaultValue={reservation.user_id} required>
                                 <option value="">Select User</option>
                                 {users.map((user) => (
                                     <option key={user.id} value={user.id}>{user.name}</option>
                                 ))}
                             </select>
-                            <select ref={carRef} className="border p-2 w-full" required>
+                            <select ref={carRef} className="border p-2 w-full" defaultValue={reservation.car_id} required>
                                 <option value="">Select Car</option>
                                 {cars.map((car) => (
                                     <option key={car.id} value={car.id}>{car.name} ({car.brand_name})</option>
                                 ))}
                             </select>
-                            <input ref={startDateRef} type="date" className="border p-2 w-full" required />
-                            <input ref={endDateRef} type="date" className="border p-2 w-full" required />
-                            <select ref={paymentStatusRef} className="border p-2 w-full" required>
-                                {paymentStatuses.map((status) => (
+                            <input ref={startDateRef} type="date" className="border p-2 w-full" defaultValue={reservation.start_date} required />
+                            <input ref={endDateRef} type="date" className="border p-2 w-full" defaultValue={reservation.end_date} required />
+                            <select ref={paymentStatusRef} className="border p-2 w-full" defaultValue={reservation.payment_status} required>
+                                {Object.values(PaymentStatus).map((status) => (
                                     <option key={status} value={status}>{status}</option>
                                 ))}
                             </select>
-                            <select ref={statusRef} className="border p-2 w-full" required>
-                                {statuses.map((status) => (
+                            <select ref={statusRef} className="border p-2 w-full" defaultValue={reservation.status} required>
+                                {Object.values(ReservationStatus).map((status) => (
                                     <option key={status} value={status}>{status}</option>
                                 ))}
                             </select>
@@ -130,10 +138,10 @@ export default function AddReservationPage() {
                             />
                             <div className="flex space-x-2">
                                 <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded">
-                                    Add Reservation
+                                    Update Reservation
                                 </button>
                                 <button type="button" onClick={() => router.push("/reservations")} className="bg-gray-500 text-white px-4 py-2 rounded">
-                                    Back
+                                    Cancel
                                 </button>
                             </div>
                         </form>

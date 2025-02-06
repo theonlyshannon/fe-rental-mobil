@@ -3,6 +3,6 @@ export interface Car {
     name: string;
     image: string;
     brand_name: string;
-    price_per_day: string;
+    price_per_day: number;
     stock: string;
 }

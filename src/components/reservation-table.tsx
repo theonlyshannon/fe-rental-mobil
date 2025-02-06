@@ -55,6 +55,11 @@ export default function ReservationTable() {
                                 <td className="border p-2">{reservation.payment_status}</td>
                                 <td className="border p-2">{reservation.status}</td>
                                 <td className="border p-2">
+                                <Link href={`/reservations/${reservation.id}/edit/`}>
+                                    <button className="bg-yellow-500 text-white px-2 py-1 rounded mr-2">
+                                        Edit
+                                    </button>
+                                </Link>
                                     <button
                                         className="bg-red-500 text-white px-2 py-1 rounded"
                                         onClick={() => handleDelete(reservation.id)}

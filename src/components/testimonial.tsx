@@ -52,7 +52,7 @@ const TestimonialCarousel = () => {
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto px-4 py-12">
+    <div className="w-full max-w-4xl mx-auto px-4 py-12 mt-12">
       <div className="relative">
         <div className="overflow-hidden">
           <div 

@@ -28,14 +28,15 @@ export const getReservationById = async (id: number): Promise<Reservation | null
     }
 };
 
-export const createReservation = async (reservation: Partial<Reservation>): Promise<Reservation | null> => {
+export const createReservation = async (reservation: FormData): Promise<Reservation | null> => {
     try {
         const response = await fetch(API_URL, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(reservation),
+            body: reservation,
         });
+
         if (!response.ok) throw new Error("Failed to create reservation");
+
         const json = await response.json();
         return json.data;
     } catch (error) {
@@ -44,14 +45,15 @@ export const createReservation = async (reservation: Partial<Reservation>): Prom
     }
 };
 
-export const updateReservation = async (id: number, reservation: Partial<Reservation>): Promise<Reservation | null> => {
+export const updateReservation = async (id: number, reservation: FormData): Promise<Reservation | null> => {
     try {
         const response = await fetch(`${API_URL}/${id}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(reservation),
+            method: "PUT", 
+            body: reservation, 
         });
+
         if (!response.ok) throw new Error(`Failed to update reservation with ID: ${id}`);
+
         const json = await response.json();
         return json.data;
     } catch (error) {

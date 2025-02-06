@@ -31,6 +31,7 @@ const Navbar: React.FC = () => {
                 </div>
                 <div className={`md:flex ${isOpen ? 'block' : 'hidden'}`}>
                     <Link href="/" className="text-white px-4 py-2">Home</Link>
+                    <Link href="/car" className="text-white px-4 py-2">Car</Link>
                     <Link href="/reservations" className="text-white px-4 py-2">Reservations</Link>
                     <Link href="/about" className="text-white px-4 py-2">About</Link>
                     <Link href="/login" className="text-white px-4 py-2">Login</Link>

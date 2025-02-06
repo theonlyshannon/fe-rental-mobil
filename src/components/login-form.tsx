@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { authService } from "@/service/authService"; 
 
 export function LoginForm({
   className,
@@ -30,24 +31,15 @@ export function LoginForm({
     setError("");
 
     try {
-      const response = await fetch(`${process.env.APP_URL}/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      });
+      await authService.login(email, password);
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Login failed");
+      // Setelah login, ambil user untuk cek role
+      const user = await authService.getUser();
+      if (user) {
+        router.push(user.role === "admin" ? "/dashboard" : "/");
+      } else {
+        router.push("/");
       }
-
-      document.cookie = `token=${data.token}; path=/;`;
-      localStorage.setItem("role", data.user.role); // Simpan role
-
-      router.push(data.user.role === "admin" ? "/dashboard" : "/");
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -102,15 +94,6 @@ export function LoginForm({
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? "Logging in..." : "Login"}
               </Button>
-              <Button variant="outline" className="w-full">
-                Login with Google
-              </Button>
-            </div>
-            <div className="mt-4 text-center text-sm">
-              Don&apos;t have an account?{" "}
-              <a href="#" className="underline underline-offset-4">
-                Sign up
-              </a>
             </div>
           </form>
         </CardContent>
@@ -118,3 +101,4 @@ export function LoginForm({
     </div>
   );
 }
+  
